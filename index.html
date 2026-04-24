@@ -1,0 +1,1184 @@
+<!DOCTYPE html>
+<html lang="pl">
+
+<head>
+  <meta charset="UTF-8">
+  <!-- Viewport: bez tego strona na telefonie wyglądałaby jak desktop przybliżony do 10% -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SecNet — Bezpieczeństwo w sieci</title>
+
+  <!-- Google Fonts: ładujemy dwie czcionki -->
+  <!-- JetBrains Mono = czcionka monospace (jak w terminalu) — dla akcentów -->
+  <!-- Inter = czytelna czcionka sans-serif dla treści -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <style>
+
+    /* =====================================================
+       CSS RESET + ZMIENNE (Custom Properties)
+       ===================================================== */
+
+    /* * = SELEKTOR UNIWERSALNY — dotyczy KAŻDEGO elementu */
+    * {
+      /* box-sizing: border-box sprawia, że padding i border
+         wlicza się w szerokość elementu — bez tego obliczenia
+         byłyby nieintuicyjne */
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    /* CSS VARIABLES (zmienne) — definiujemy raz, używamy wszędzie.
+       Jeśli zmienisz kolor tu, zmieni się w całej stronie. */
+    :root {
+      --bg-primary:     #080c14;   /* tło główne — prawie czarne */
+      --bg-secondary:   #0d1220;   /* tło kart i sekcji */
+      --bg-card:        #111827;   /* tło kart */
+      --accent:         #00d4ff;   /* kolor akcentu — cyjan */
+      --accent-dim:     #00d4ff22; /* accent z przezroczystością (22 = hex = ~13% opacity) */
+      --text-primary:   #e8eaf0;   /* główny tekst */
+      --text-secondary: #6b7a99;   /* mniejszy, mniej ważny tekst */
+      --border:         #1a2540;   /* kolor obramowań */
+      --green:          #00ff88;   /* zielony akcent */
+      --red:            #ff4757;   /* czerwony akcent */
+
+      /* Czcionki z Google Fonts — jak odwołujemy się do nich w CSS */
+      --font-body: 'Inter', sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+    }
+
+    /* =====================================================
+       BASE STYLES — podstawowe style dla całej strony
+       ===================================================== */
+
+    html {
+      /* scroll-behavior: smooth — kliknięcie w link #sekcja
+         przewija stronę płynnie zamiast skakać */
+      scroll-behavior: smooth;
+    }
+
+    body {
+      font-family: var(--font-body);    /* używamy zmiennej */
+      background-color: var(--bg-primary);
+      color: var(--text-primary);
+      line-height: 1.6;
+      /* Efekt: subtelna siatka w tle — czysto CSS, bez obrazków!
+         Używamy linear-gradient z bardzo małą przezroczystością */
+      background-image:
+        linear-gradient(rgba(0, 212, 255, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 212, 255, 0.03) 1px, transparent 1px);
+      background-size: 60px 60px; /* rozmiar komórki siatki */
+    }
+
+    /* =====================================================
+       NAWIGACJA
+       ===================================================== */
+
+    /* <nav> to semantyczny element HTML5 — mówi przeglądarce
+       i wyszukiwarkom "tu jest nawigacja" */
+    nav {
+      /* position: sticky — nawigacja przykleja się do góry
+         gdy scrollujemy. top: 0 = dokładnie przy górnej krawędzi */
+      position: sticky;
+      top: 0;
+
+      /* z-index: wartość głębokości — wyższy = na wierzchu.
+         Nav musi być nad innymi elementami */
+      z-index: 100;
+
+      display: flex;                    /* Flexbox! */
+      align-items: center;             /* centrowanie pionowe */
+      justify-content: space-between; /* logo po lewej, linki po prawej */
+
+      padding: 0 5%;   /* 5% od lewej i prawej krawędzi */
+      height: 64px;
+
+      background-color: rgba(8, 12, 20, 0.85); /* lekko przezroczyste */
+      /* backdrop-filter: efekt rozmycia tego co jest za elementem.
+         Wymaga przezroczystego tła! */
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px); /* prefix dla Safari */
+      border-bottom: 1px solid var(--border);
+    }
+
+    /* LOGO */
+    .logo {
+      font-family: var(--font-mono);
+      font-size: 16px;
+      font-weight: 500;
+      color: var(--accent);
+      letter-spacing: 0.1em; /* odstęp między literami */
+      text-decoration: none;  /* usuwa podkreślenie z linku */
+    }
+
+    /* Znak ">" przed logo — element dekoracyjny */
+    .logo::before {
+      /* ::before = pseudo-element — dodaje treść przed elementem
+         bez modyfikowania HTML! */
+      content: '> ';
+      opacity: 0.5;
+    }
+
+    /* LINKI NAWIGACYJNE */
+    .nav-links {
+      display: flex;
+      gap: 8px; /* odstęp między elementami Flexbox */
+      list-style: none; /* usuwa kropki z listy <ul> */
+    }
+
+    .nav-links a {
+      font-size: 13px;
+      color: var(--text-secondary);
+      text-decoration: none;
+      padding: 6px 12px;
+      border-radius: 6px;
+      /* transition = płynna animacja zmian właściwości CSS */
+      transition: color 0.2s ease, background 0.2s ease;
+    }
+
+    /* :hover = pseudoklasa — styl TYLKO gdy mysz jest na elemencie */
+    .nav-links a:hover {
+      color: var(--text-primary);
+      background: var(--accent-dim);
+    }
+
+    /* PRZYCISK CTA w nawigacji */
+    .nav-cta {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      color: var(--accent);
+      background: transparent;
+      border: 1px solid var(--accent);
+      padding: 7px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background 0.2s ease, color 0.2s ease;
+      text-decoration: none;
+      letter-spacing: 0.05em;
+    }
+
+    .nav-cta:hover {
+      background: var(--accent);
+      color: var(--bg-primary);
+    }
+
+    /* Podpis autora w nawigacji */
+    .nav-author {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--text-secondary);
+      letter-spacing: 0.04em;
+      /* Separator po lewej stronie */
+      border-left: 1px solid var(--border);
+      padding-left: 16px;
+      margin-left: 8px;
+    }
+
+    /* Imię i nazwisko w innym kolorze niż prefix */
+    .nav-author span {
+      color: var(--text-primary);
+    }
+
+    /* Na małych ekranach chowamy autora razem z linkami */
+    @media (max-width: 600px) {
+      .nav-author { display: none; }
+    }
+
+    /* =====================================================
+       HERO SECTION — główna sekcja powitalna
+       ===================================================== */
+
+    .hero {
+      /* min-height: 90vh = minimum 90% wysokości okna przeglądarki.
+         vh = viewport height, vw = viewport width — relatywne do okna */
+      min-height: 90vh;
+
+      /* Flexbox do centrowania zawartości */
+      display: flex;
+      flex-direction: column;   /* elementy układają się w kolumnie */
+      align-items: center;
+      justify-content: center;
+
+      text-align: center;
+      padding: 80px 5% 60px;
+
+      /* Pozycja relative potrzebna dla ::before (dekoracja tła) */
+      position: relative;
+      overflow: hidden; /* ukrywa co wychodzi poza granice */
+    }
+
+    /* Dekoracja tła: wielki rozmyty "blask" za tekstem — czysto CSS */
+    .hero::before {
+      content: '';
+      position: absolute;  /* absolute = wyciąga z normalnego przepływu */
+      top: 10%;
+      left: 50%;
+      /* transform: translate(-50%, 0) przesuwa o 50% własnej szerokości
+         w lewo — standardowy trick na centrowanie */
+      transform: translateX(-50%);
+      width: 600px;
+      height: 600px;
+      /* radial-gradient: kółkowy gradient */
+      background: radial-gradient(circle, rgba(0, 212, 255, 0.08) 0%, transparent 70%);
+      /* pointer-events: none — mysz "przechodzi przez" ten element */
+      pointer-events: none;
+    }
+
+    /* Tag nad tytułem */
+    .hero-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      color: var(--accent);
+      background: var(--accent-dim);
+      border: 1px solid rgba(0, 212, 255, 0.2);
+      padding: 6px 16px;
+      border-radius: 20px; /* duży radius = "pill" kształt */
+      margin-bottom: 32px;
+      letter-spacing: 0.08em;
+      /* Animacja wejścia — patrz @keyframes poniżej */
+      animation: fadeInDown 0.6s ease forwards;
+    }
+
+    /* Migający "pulsar" obok tekstu — animacja CSS */
+    .pulse {
+      width: 6px;
+      height: 6px;
+      background: var(--green);
+      border-radius: 50%; /* koło */
+      /* animation: nazwa czas timing iteracje */
+      animation: pulse 2s ease infinite;
+    }
+
+    /* GŁÓWNY TYTUŁ */
+    .hero h1 {
+      font-size: clamp(36px, 6vw, 72px);
+      /* clamp(min, preferowany, max) — font skaluje się z oknem!
+         Minimum 36px, cel = 6% szerokości okna, maksimum 72px */
+      font-weight: 600;
+      line-height: 1.1;
+      margin-bottom: 24px;
+      /* Animacja z opóźnieniem */
+      animation: fadeInUp 0.6s ease 0.1s forwards;
+      opacity: 0; /* startujemy niewidoczni — animacja odkrywa */
+    }
+
+    /* Zaznaczony tekst w tytule — klasa CSS na <span> w HTML */
+    .hero h1 .highlight {
+      color: var(--accent);
+      /* Podkreślenie tekstowe w stylu terminala */
+      position: relative;
+    }
+
+    .hero h1 .highlight::after {
+      content: '';
+      position: absolute;
+      bottom: 4px;
+      left: 0;
+      width: 100%;
+      height: 2px;
+      background: var(--accent);
+      opacity: 0.4;
+    }
+
+    /* OPIS */
+    .hero p {
+      font-size: clamp(15px, 2vw, 18px);
+      color: var(--text-secondary);
+      max-width: 560px;  /* ograniczamy szerokość tekstu dla czytelności */
+      margin-bottom: 40px;
+      animation: fadeInUp 0.6s ease 0.2s forwards;
+      opacity: 0;
+    }
+
+    /* PRZYCISKI */
+    .hero-buttons {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap; /* jeśli nie mieszczą się, zawijają do nowej linii */
+      justify-content: center;
+      animation: fadeInUp 0.6s ease 0.3s forwards;
+      opacity: 0;
+    }
+
+    .btn-primary {
+      font-family: var(--font-body);
+      font-size: 15px;
+      font-weight: 500;
+      color: var(--bg-primary);
+      background: var(--accent);
+      border: none;
+      padding: 12px 28px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: transform 0.2s ease, opacity 0.2s ease;
+      text-decoration: none;
+    }
+
+    /* :active = styl gdy klikamy przycisk */
+    .btn-primary:hover { opacity: 0.9; }
+    .btn-primary:active { transform: scale(0.97); }
+
+    .btn-secondary {
+      font-family: var(--font-body);
+      font-size: 15px;
+      color: var(--text-secondary);
+      background: transparent;
+      border: 1px solid var(--border);
+      padding: 12px 28px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: color 0.2s ease, border-color 0.2s ease;
+      text-decoration: none;
+    }
+
+    .btn-secondary:hover {
+      color: var(--text-primary);
+      border-color: var(--text-secondary);
+    }
+
+    /* STATYSTYKI pod przyciskami */
+    .hero-stats {
+      display: flex;
+      gap: 40px;
+      margin-top: 64px;
+      padding-top: 40px;
+      /* border-top tylko po górnej krawędzi */
+      border-top: 1px solid var(--border);
+      animation: fadeInUp 0.6s ease 0.4s forwards;
+      opacity: 0;
+    }
+
+    .stat {
+      text-align: center;
+    }
+
+    .stat-num {
+      font-family: var(--font-mono);
+      font-size: 28px;
+      font-weight: 500;
+      color: var(--accent);
+      display: block; /* display: block = nowa linia */
+    }
+
+    .stat-label {
+      font-size: 12px;
+      color: var(--text-secondary);
+      margin-top: 4px;
+    }
+
+    /* =====================================================
+       ANIMACJE (@keyframes)
+       ===================================================== */
+
+    /* @keyframes definiuje animację — od stanu A do stanu B */
+    @keyframes fadeInDown {
+      from {
+        opacity: 0;
+        transform: translateY(-16px); /* przesuń w górę o 16px */
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px); /* przesuń w dół o 20px */
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* Animacja migającego pulsara */
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50%       { opacity: 0.4; transform: scale(0.8); }
+    }
+
+    /* =====================================================
+       RESPONSYWNOŚĆ — Media Queries
+       ===================================================== */
+
+    /* @media = "jeśli szerokość okna jest mniejsza niż X px, zastosuj te style" */
+    @media (max-width: 600px) {
+
+      /* Na małych ekranach chowamy linki nawigacyjne */
+      .nav-links {
+        display: none;
+      }
+
+      .hero-stats {
+        gap: 24px;
+        flex-wrap: wrap;
+        justify-content: center;
+      }
+
+      .hero-buttons {
+        flex-direction: column; /* przyciski jedna pod drugą */
+        align-items: center;
+      }
+    }
+
+  </style>
+
+  <style>
+    /* =====================================================
+       STYLE SEKCJI TEMATÓW
+       ===================================================== */
+
+    .topics {
+      padding: 96px 5%;
+      border-top: 1px solid var(--border);
+    }
+
+    .section-header {
+      text-align: center;
+      margin-bottom: 56px;
+    }
+
+    .section-tag {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      color: var(--accent);
+      letter-spacing: 0.1em;
+      margin-bottom: 12px;
+    }
+
+    .section-header h2 {
+      font-size: clamp(24px, 4vw, 40px);
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 12px;
+    }
+
+    .section-desc {
+      font-size: 16px;
+      color: var(--text-secondary);
+      max-width: 480px;
+      margin: 0 auto;
+    }
+
+    .cards-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+    }
+
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      transition: border-color 0.2s ease, transform 0.2s ease;
+      opacity: 0;
+      animation: fadeInUp 0.5s ease forwards;
+    }
+
+    .card:nth-child(1) { animation-delay: 0.05s; }
+    .card:nth-child(2) { animation-delay: 0.10s; }
+    .card:nth-child(3) { animation-delay: 0.15s; }
+    .card:nth-child(4) { animation-delay: 0.20s; }
+    .card:nth-child(5) { animation-delay: 0.25s; }
+    .card:nth-child(6) { animation-delay: 0.30s; }
+
+    .card:hover {
+      transform: translateY(-4px);
+    }
+
+    .card-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 4px;
+    }
+
+    .card h3 {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .card p {
+      font-size: 13px;
+      color: var(--text-secondary);
+      line-height: 1.6;
+      flex: 1;
+    }
+
+    .card-level {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      letter-spacing: 0.08em;
+      padding: 3px 10px;
+      border-radius: 20px;
+      align-self: flex-start;
+      margin-top: 4px;
+    }
+
+    .card--blue:hover  { border-color: #00d4ff44; }
+    .card--green:hover { border-color: #00ff8844; }
+    .card--amber:hover { border-color: #ffb30044; }
+    .card--red:hover   { border-color: #ff475744; }
+    .card--purple:hover{ border-color: #a78bfa44; }
+    .card--teal:hover  { border-color: #2dd4bf44; }
+
+    .card--blue   .card-icon { background: #00d4ff15; color: #00d4ff; }
+    .card--green  .card-icon { background: #00ff8815; color: #00ff88; }
+    .card--amber  .card-icon { background: #ffb30015; color: #ffb300; }
+    .card--red    .card-icon { background: #ff475715; color: #ff4757; }
+    .card--purple .card-icon { background: #a78bfa15; color: #a78bfa; }
+    .card--teal   .card-icon { background: #2dd4bf15; color: #2dd4bf; }
+
+    .card--blue   .card-level { background: #00d4ff15; color: #00d4ff; }
+    .card--green  .card-level { background: #00ff8815; color: #00ff88; }
+    .card--amber  .card-level { background: #ffb30015; color: #ffb300; }
+    .card--red    .card-level { background: #ff475715; color: #ff4757; }
+    .card--purple .card-level { background: #a78bfa15; color: #a78bfa; }
+    .card--teal   .card-level { background: #2dd4bf15; color: #2dd4bf; }
+
+    /* =====================================================
+       SEKCJA ARTYKUŁÓW
+       ===================================================== */
+
+    .articles,
+    .tools,
+    .about,
+    .newsletter,
+    footer {
+      padding: 96px 5%;
+      border-top: 1px solid var(--border);
+    }
+
+    .articles-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+    }
+
+    .article-card {
+      background: linear-gradient(180deg, rgba(17, 24, 39, 0.95), rgba(13, 18, 32, 0.95));
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 24px;
+      transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+      box-shadow: 0 0 0 rgba(0, 212, 255, 0);
+    }
+
+    .article-card:hover {
+      transform: translateY(-4px);
+      border-color: rgba(0, 212, 255, 0.3);
+      box-shadow: 0 18px 36px rgba(0, 0, 0, 0.24);
+    }
+
+    .article-meta,
+    .tool-label,
+    .newsletter-note,
+    .about-tag {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--accent);
+    }
+
+    .article-card h3,
+    .tool-card h3,
+    .about-panel h3,
+    .newsletter-box h3 {
+      font-size: 22px;
+      font-weight: 600;
+      margin: 14px 0 10px;
+      color: var(--text-primary);
+    }
+
+    .article-card p,
+    .tool-card p,
+    .about-panel p,
+    .newsletter-box p,
+    .footer-copy {
+      color: var(--text-secondary);
+      font-size: 15px;
+      line-height: 1.7;
+    }
+
+    .article-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 18px;
+      text-decoration: none;
+      color: var(--text-primary);
+      font-family: var(--font-mono);
+      font-size: 12px;
+      transition: color 0.2s ease;
+    }
+
+    .article-link:hover {
+      color: var(--accent);
+    }
+
+    /* =====================================================
+       SEKCJA NARZĘDZI
+       ===================================================== */
+
+    .tools-layout {
+      display: grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      gap: 18px;
+      align-items: stretch;
+    }
+
+    .tool-card,
+    .checklist-card,
+    .about-panel,
+    .newsletter-box {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 24px;
+    }
+
+    .tool-list {
+      display: grid;
+      gap: 14px;
+      margin-top: 22px;
+    }
+
+    .tool-item {
+      display: grid;
+      grid-template-columns: 42px 1fr;
+      gap: 14px;
+      align-items: start;
+      padding: 16px;
+      background: rgba(255, 255, 255, 0.01);
+      border: 1px solid rgba(255, 255, 255, 0.03);
+      border-radius: 12px;
+    }
+
+    .tool-item strong {
+      display: block;
+      margin-bottom: 4px;
+      color: var(--text-primary);
+      font-size: 15px;
+    }
+
+    .tool-index {
+      width: 42px;
+      height: 42px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 10px;
+      background: var(--accent-dim);
+      color: var(--accent);
+      font-family: var(--font-mono);
+      font-size: 13px;
+    }
+
+    .checklist {
+      display: grid;
+      gap: 12px;
+      margin-top: 18px;
+    }
+
+    .check-item {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      padding: 14px 16px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      color: var(--text-secondary);
+      transition: border-color 0.2s ease, background 0.2s ease;
+    }
+
+    .check-item input {
+      accent-color: var(--accent);
+      width: 18px;
+      height: 18px;
+      flex: 0 0 auto;
+    }
+
+    .check-item.is-done {
+      border-color: rgba(0, 255, 136, 0.25);
+      background: rgba(0, 255, 136, 0.05);
+      color: var(--text-primary);
+    }
+
+    .checklist-status {
+      margin-top: 18px;
+      padding: 14px 16px;
+      border-radius: 12px;
+      background: rgba(0, 212, 255, 0.08);
+      color: var(--text-primary);
+      font-family: var(--font-mono);
+      font-size: 12px;
+      letter-spacing: 0.05em;
+    }
+
+    /* =====================================================
+       O STRONIE + NEWSLETTER
+       ===================================================== */
+
+    .about-layout {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 18px;
+    }
+
+    .about-panel ul {
+      list-style: none;
+      margin-top: 18px;
+      display: grid;
+      gap: 10px;
+    }
+
+    .about-panel li {
+      padding: 12px 14px;
+      border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.04);
+      background: rgba(255, 255, 255, 0.015);
+      color: var(--text-secondary);
+    }
+
+    .newsletter-box {
+      display: grid;
+      grid-template-columns: 1.2fr 0.8fr;
+      gap: 18px;
+      align-items: center;
+    }
+
+    .newsletter-actions {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-top: 22px;
+    }
+
+    .ghost-box {
+      border-radius: 14px;
+      border: 1px solid rgba(0, 212, 255, 0.16);
+      background: linear-gradient(180deg, rgba(0, 212, 255, 0.06), rgba(0, 212, 255, 0.02));
+      padding: 20px;
+    }
+
+    .ghost-box strong {
+      display: block;
+      margin-bottom: 8px;
+      color: var(--text-primary);
+      font-family: var(--font-mono);
+      font-size: 13px;
+      letter-spacing: 0.06em;
+    }
+
+    footer {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      align-items: center;
+      padding-bottom: 48px;
+    }
+
+    .footer-links {
+      display: flex;
+      gap: 14px;
+      flex-wrap: wrap;
+    }
+
+    .footer-links a {
+      color: var(--text-secondary);
+      text-decoration: none;
+      font-family: var(--font-mono);
+      font-size: 12px;
+    }
+
+    .footer-links a:hover {
+      color: var(--accent);
+    }
+
+    @media (max-width: 980px) {
+      .cards-grid,
+      .articles-grid,
+      .about-layout,
+      .tools-layout,
+      .newsletter-box {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 700px) {
+      .articles,
+      .tools,
+      .about,
+      .newsletter,
+      footer {
+        padding: 72px 5%;
+      }
+
+      .articles-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .topics {
+        padding: 72px 5%;
+      }
+
+      footer {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- NAWIGACJA -->
+  <nav>
+    <a href="#" class="logo">SecNet</a>
+
+    <!-- <ul> = unordered list, <li> = list item
+         Semantycznie poprawna struktura dla menu -->
+    <ul class="nav-links">
+      <li><a href="#tematy">Tematy</a></li>
+      <li><a href="#artykuly">Artykuły</a></li>
+      <li><a href="#narzedzia">Narzędzia</a></li>
+      <li><a href="#o-stronie">O stronie</a></li>
+    </ul>
+
+    <div style="display:flex;align-items:center;gap:12px;">
+      <!-- .nav-author: prefix "by" + imię i nazwisko w osobnym <span> -->
+      <p class="nav-author">by <span>Mateusz Baczyński</span></p>
+      <a href="#newsletter" class="nav-cta">Newsletter</a>
+    </div>
+  </nav>
+
+  <!-- HERO SECTION -->
+  <!-- <section> = semantyczny kontener dla tematycznej sekcji strony -->
+  <section class="hero" id="start">
+
+    <!-- Tag/badge nad tytułem -->
+    <div class="hero-tag">
+      <span class="pulse"></span>
+      // bezpieczeństwo w sieci
+    </div>
+
+    <!-- Tytuł: <span> z klasą do stylowania fragmentu tekstu -->
+    <h1>
+      Zrozum zagrożenia.<br>
+      <span class="highlight">Chroń się skutecznie.</span>
+    </h1>
+
+    <!-- <p> = akapit -->
+    <p>
+      Praktyczna wiedza o cyberbezpieczeństwie — bez zbędnego żargonu.
+      Artykuły, poradniki i narzędzia dla każdego użytkownika internetu.
+    </p>
+
+    <!-- Przyciski — <a> zamiast <button> gdy prowadzą do sekcji/strony -->
+    <div class="hero-buttons">
+      <a href="#artykuly" class="btn-primary">Zacznij czytać</a>
+      <a href="#narzedzia" class="btn-secondary">Sprawdź swoje dane</a>
+    </div>
+
+    <!-- Statystyki -->
+    <div class="hero-stats">
+      <div class="stat">
+        <span class="stat-num">127+</span>
+        <div class="stat-label">artykułów</div>
+      </div>
+      <div class="stat">
+        <span class="stat-num">98%</span>
+        <div class="stat-label">ataków można uniknąć</div>
+      </div>
+      <div class="stat">
+        <span class="stat-num">24/7</span>
+        <div class="stat-label">aktualności</div>
+      </div>
+    </div>
+
+  </section>
+
+  <!-- =====================================================
+       SEKCJA TEMATÓW
+       ===================================================== -->
+  <section class="topics" id="tematy">
+
+    <!-- Nagłówek sekcji -->
+    <div class="section-header">
+      <p class="section-tag">// tematy</p>
+      <h2>Co znajdziesz na stronie?</h2>
+      <p class="section-desc">Sześć obszarów cyberbezpieczeństwa — od podstaw po zaawansowane techniki.</p>
+    </div>
+
+    <!-- GRID KART — tu działa CSS Grid -->
+    <!-- Każdy .card to jeden "kafelek" w siatce -->
+    <div class="cards-grid">
+
+      <div class="card card--blue">
+        <div class="card-icon">
+          <!-- SVG inline — mała ikonka narysowana kodem -->
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M4 4h16v16H4z"/><path d="M9 9h6M9 12h6M9 15h4"/>
+          </svg>
+        </div>
+        <h3>Phishing</h3>
+        <p>Jak rozpoznać fałszywe e-maile, SMS-y i strony podszywające się pod znane serwisy.</p>
+        <span class="card-level">podstawowy</span>
+      </div>
+
+      <div class="card card--green">
+        <div class="card-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+          </svg>
+        </div>
+        <h3>Hasła i 2FA</h3>
+        <p>Tworzenie silnych haseł, menedżery haseł i uwierzytelnianie dwuetapowe krok po kroku.</p>
+        <span class="card-level">podstawowy</span>
+      </div>
+
+      <div class="card card--amber">
+        <div class="card-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/>
+          </svg>
+        </div>
+        <h3>VPN i prywatność</h3>
+        <p>Anonimowość w sieci, szyfrowanie połączeń i ochrona danych w sieciach publicznych.</p>
+        <span class="card-level">średni</span>
+      </div>
+
+      <div class="card card--red">
+        <div class="card-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5M2 12l10 5 10-5"/>
+          </svg>
+        </div>
+        <h3>Ransomware</h3>
+        <p>Jak działa oprogramowanie szyfrujące dane i jak się przed nim bronić zanim uderzy.</p>
+        <span class="card-level">średni</span>
+      </div>
+
+      <div class="card card--purple">
+        <div class="card-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
+          </svg>
+        </div>
+        <h3>Social engineering</h3>
+        <p>Psychologia manipulacji — jak atakujący używają ludzkich słabości zamiast technologii.</p>
+        <span class="card-level">zaawansowany</span>
+      </div>
+
+      <div class="card card--teal">
+        <div class="card-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/>
+            <circle cx="12" cy="20" r="1" fill="currentColor"/>
+          </svg>
+        </div>
+        <h3>Bezpieczne Wi-Fi</h3>
+        <p>Zagrożenia w sieciach publicznych, ataki MITM i jak bezpiecznie korzystać z kawiarnianych hotspotów.</p>
+        <span class="card-level">podstawowy</span>
+      </div>
+
+    </div>
+  </section>
+
+  <section class="articles" id="artykuly">
+    <div class="section-header">
+      <p class="section-tag">// artykuły</p>
+      <h2>Najpierw zrozum, potem klikaj</h2>
+      <p class="section-desc">Krótka biblioteka materiałów, które uczą reagować spokojnie i trafnie.</p>
+    </div>
+
+    <div class="articles-grid">
+      <article class="article-card">
+        <p class="article-meta">01 / phishing</p>
+        <h3>7 sygnałów, że e-mail nie pochodzi z banku</h3>
+        <p>Pokazujemy, jak sprawdzać domeny, presję czasu i podejrzane linki, zanim podasz jakiekolwiek dane.</p>
+        <a class="article-link" href="#narzedzia">zobacz narzędzia diagnostyczne</a>
+      </article>
+
+      <article class="article-card">
+        <p class="article-meta">02 / prywatność</p>
+        <h3>Co naprawdę zdradzasz przez publiczny profil</h3>
+        <p>Zdjęcia, daty, lokalizacje i nazwy szkół pomagają budować wiarygodne oszustwa oparte na socjotechnice.</p>
+        <a class="article-link" href="#o-stronie">sprawdź dobre praktyki</a>
+      </article>
+
+      <article class="article-card">
+        <p class="article-meta">03 / urządzenia</p>
+        <h3>Aktualizacje to nie kosmetyka, tylko obrona</h3>
+        <p>Wyjaśniamy, dlaczego odkładanie aktualizacji systemu i przeglądarki zwiększa ryzyko wykorzystania znanych luk.</p>
+        <a class="article-link" href="#newsletter">otrzymuj kolejne poradniki</a>
+      </article>
+    </div>
+  </section>
+
+  <section class="tools" id="narzedzia">
+    <div class="section-header">
+      <p class="section-tag">// narzędzia</p>
+      <h2>Małe działania, duży efekt bezpieczeństwa</h2>
+      <p class="section-desc">Zamiast straszyć, ta sekcja prowadzi krok po kroku przez rzeczy, które warto zrobić od razu.</p>
+    </div>
+
+    <div class="tools-layout">
+      <div class="tool-card">
+        <p class="tool-label">zestaw startowy</p>
+        <h3>Od czego zacząć jeszcze dziś?</h3>
+        <p>Nawet bez specjalistycznej wiedzy możesz szybko podnieść poziom ochrony swoich kont i urządzeń.</p>
+
+        <div class="tool-list">
+          <div class="tool-item">
+            <div class="tool-index">01</div>
+            <div>
+              <strong>Menedżer haseł</strong>
+              Zacznij przechowywać loginy i długie, unikalne hasła w jednym bezpiecznym miejscu.
+            </div>
+          </div>
+          <div class="tool-item">
+            <div class="tool-index">02</div>
+            <div>
+              <strong>Włącz 2FA</strong>
+              Priorytetowo zabezpiecz pocztę, bankowość, social media i wszystkie konta z danymi osobowymi.
+            </div>
+          </div>
+          <div class="tool-item">
+            <div class="tool-index">03</div>
+            <div>
+              <strong>Kopia zapasowa</strong>
+              Regularny backup wciąż pozostaje jedną z najlepszych obron przed awarią, kradzieżą i ransomware.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <aside class="checklist-card">
+        <p class="tool-label">checklista bezpieczeństwa</p>
+        <h3>Sprawdź swój poziom gotowości</h3>
+        <p>Zaznacz, co masz już wdrożone. Pasek stanu podsumuje Twój postęp.</p>
+
+        <div class="checklist">
+          <label class="check-item"><input type="checkbox"> Mam inne hasło do każdego ważnego serwisu</label>
+          <label class="check-item"><input type="checkbox"> Włączyłem 2FA dla poczty i banku</label>
+          <label class="check-item"><input type="checkbox"> Aktualizuję system i aplikacje bez dużych opóźnień</label>
+          <label class="check-item"><input type="checkbox"> Nie otwieram załączników od nieznanych nadawców</label>
+          <label class="check-item"><input type="checkbox"> Mam kopię zapasową najważniejszych plików</label>
+        </div>
+
+        <div class="checklist-status" id="checklistStatus">STATUS: 0 / 5 zabezpieczeń aktywnych</div>
+      </aside>
+    </div>
+  </section>
+
+  <section class="about" id="o-stronie">
+    <div class="section-header">
+      <p class="section-tag">// o stronie</p>
+      <h2>Dlaczego powstał SecNet?</h2>
+      <p class="section-desc">Bo większość zagrożeń nie wymaga hakerskiego filmu akcji. Wystarczy chwila nieuwagi.</p>
+    </div>
+
+    <div class="about-layout">
+      <article class="about-panel">
+        <p class="about-tag">misja</p>
+        <h3>Uczyć bez paniki i bez żargonu</h3>
+        <p>Strona ma pomagać zwykłym użytkownikom internetu podejmować lepsze decyzje: świadomie klikać, rozpoznawać manipulację i ograniczać ryzyko zanim pojawi się problem.</p>
+      </article>
+
+      <article class="about-panel">
+        <p class="about-tag">na czym się skupiamy</p>
+        <h3>Konkrety zamiast teorii</h3>
+        <ul>
+          <li>jak rozpoznawać phishing i fałszywe sklepy</li>
+          <li>jak chronić konto pocztowe, które jest kluczem do reszty usług</li>
+          <li>jak ustawić podstawowe bezpieczeństwo telefonu i komputera</li>
+          <li>jak nie dać się presji czasu, autorytetu i emocjom</li>
+        </ul>
+      </article>
+    </div>
+  </section>
+
+  <section class="newsletter" id="newsletter">
+    <div class="newsletter-box">
+      <div>
+        <p class="newsletter-note">// newsletter</p>
+        <h3>Chcesz dostawać krótkie alerty i poradniki?</h3>
+        <p>Raz w tygodniu: jedno konkretne zagrożenie, jeden praktyczny nawyk i jedno narzędzie warte sprawdzenia.</p>
+        <div class="newsletter-actions">
+          <a href="#start" class="btn-primary" id="tipTrigger">Pokaż szybką poradę</a>
+          <a href="#tematy" class="btn-secondary">Wróć do tematów</a>
+        </div>
+      </div>
+
+      <aside class="ghost-box">
+        <strong>OSTATNI ALERT</strong>
+        Uważaj na wiadomości o dopłacie do paczki i rzekome blokady konta. To wciąż jedne z najczęstszych scenariuszy wyłudzeń.
+      </aside>
+    </div>
+  </section>
+
+  <footer>
+    <p class="footer-copy">SecNet — prosta edukacja o cyberbezpieczeństwie dla codziennych użytkowników internetu.</p>
+    <div class="footer-links">
+      <a href="#tematy">Tematy</a>
+      <a href="#artykuly">Artykuły</a>
+      <a href="#narzedzia">Narzędzia</a>
+      <a href="#newsletter">Newsletter</a>
+    </div>
+  </footer>
+
+  <script>
+    const checklistItems = document.querySelectorAll('.check-item input');
+    const checklistStatus = document.getElementById('checklistStatus');
+    const tipTrigger = document.getElementById('tipTrigger');
+    const heroTitle = document.querySelector('.hero p');
+
+    const quickTips = [
+      'Nigdy nie podawaj kodu SMS ani kodu z aplikacji, nawet jeśli rozmówca twierdzi, że jest z banku.',
+      'Najbezpieczniej wejść do usługi przez ręcznie wpisany adres, a nie przez link z wiadomości.',
+      'Jeśli ktoś pogania Cię do kliknięcia, to właśnie jest moment, żeby zwolnić i sprawdzić szczegóły.',
+      'Poczta e-mail to centrum odzyskiwania innych kont, więc to właśnie ją zabezpiecz najpierw.'
+    ];
+
+    function updateChecklist() {
+      const checked = Array.from(checklistItems).filter((item) => item.checked).length;
+
+      checklistItems.forEach((item) => {
+        item.parentElement.classList.toggle('is-done', item.checked);
+      });
+
+      checklistStatus.textContent = `STATUS: ${checked} / ${checklistItems.length} zabezpieczen aktywnych`;
+    }
+
+    checklistItems.forEach((item) => {
+      item.addEventListener('change', updateChecklist);
+    });
+
+    tipTrigger.addEventListener('click', (event) => {
+      event.preventDefault();
+      const nextTip = quickTips[Math.floor(Math.random() * quickTips.length)];
+      heroTitle.textContent = nextTip;
+      document.getElementById('start').scrollIntoView({ behavior: 'smooth' });
+    });
+
+    updateChecklist();
+  </script>
+
+</body>
+</html>
